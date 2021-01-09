@@ -111,7 +111,6 @@ struct Stack <int>
     return lua_type (L, index) == LUA_TNUMBER;
   }
 };
-#endif // LUA_NATIVE_INTEGERS
 
 //------------------------------------------------------------------------------
 /**
@@ -295,6 +294,7 @@ struct Stack <unsigned long long>
     return lua_type (L, index) == LUA_TNUMBER;
   }
 };
+#endif // LUA_NATIVE_INTEGERS
 
 //------------------------------------------------------------------------------
 /**
