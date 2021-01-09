@@ -1,3 +1,5 @@
+See CHANGES-seeduvax.md for changes in the seeduvax fork.
+
 ## Version 2.6
 
 * Added namespace `addFunction()` accepting `std::function` (C++11 only).

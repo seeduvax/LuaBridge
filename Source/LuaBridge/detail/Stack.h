@@ -89,6 +89,7 @@ struct Stack <lua_CFunction>
 };
 
 //------------------------------------------------------------------------------
+#ifndef LUA_NATIVE_INTEGERS
 /**
     Stack specialization for `int`.
 */
@@ -110,6 +111,7 @@ struct Stack <int>
     return lua_type (L, index) == LUA_TNUMBER;
   }
 };
+#endif // LUA_NATIVE_INTEGERS
 
 //------------------------------------------------------------------------------
 /**
