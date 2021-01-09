@@ -117,7 +117,15 @@ struct CFunc
 
       if (lua_isnil (L, -1)) // Stack: mt, nil
       {
-        lua_remove (L, -2); // Stack: nil
+        lua_pop (L, 1); // Stack: mt
+        rawgetfield (L,-1,"__indexfb"); // Stack: mt, ifb (may be nil)
+        lua_remove (L, -2); // Stack: ifb
+        if (lua_iscfunction (L,-1)) 
+        {
+            lua_pushvalue (L, 1); // Stack: ifb, arg1
+            lua_pushvalue (L, 2); // Stack: ifb, arg2
+            lua_call (L, 2, 1); // Stack: ifbresult
+        } 
         return 1;
       }
 
@@ -192,6 +200,14 @@ struct CFunc
       if (lua_isnil (L, -1)) // Stack: mt, nil
       {
         lua_pop (L, 1); // Stack: -
+        rawgetfield(L,-1,"__newindexfb"); // Stack: nifb (may be nil)
+        if (lua_iscfunction(L,-1)) {
+          lua_pushvalue(L,1); // stack: nifb, arg1
+          lua_pushvalue(L,2); // stack: nifb, arg2
+          lua_pushvalue(L,3); // stack: nifb, arg3
+          lua_call(L,3,1); // stack: nifbresult
+          return 0;
+        }
         return luaL_error (L, "No writable member '%s'", lua_tostring (L, 2));
       }
 
