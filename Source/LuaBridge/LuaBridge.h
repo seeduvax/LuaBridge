@@ -35,8 +35,9 @@
 //
 
 #define LUABRIDGE_MAJOR_VERSION 2
-#define LUABRIDGE_MINOR_VERSION 3
-#define LUABRIDGE_VERSION 203
+#define LUABRIDGE_MINOR_VERSION 6
+#define LUABRIDGE_VERSION 0
+#define LUABRIDGE_INDEXFB_META_FEATURE 1
 
 #ifndef LUA_VERSION_NUM
 #error "Lua headers must be included prior to LuaBridge ones"
