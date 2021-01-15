@@ -124,6 +124,31 @@ inline const void* getParentKey ()
 }
 
 /**
+ * The key of the index fall back in another metatable.
+ */
+inline const void* getIndexKey ()
+{
+#ifdef _NDEBUG
+  static char value;
+  return &value;
+#else
+  return reinterpret_cast <void*> (0x81ca);
+#endif
+}
+/**
+ * The key of the new index fall back in another metatable.
+ */
+inline const void* getNewIndexKey ()
+{
+#ifdef _NDEBUG
+  static char value;
+  return &value;
+#else
+  return reinterpret_cast <void*> (0x8107);
+#endif
+}
+
+/**
     Get the key for the static table in the Lua registry.
     The static table holds the static data members, static properties, and
     static member functions for a class.

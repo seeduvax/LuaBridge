@@ -877,6 +877,7 @@ class Namespace : public detail::Registrar
       return *this;
     }
 
+
     //--------------------------------------------------------------------------
     /**
         Add or replace a proxy function.
@@ -918,6 +919,32 @@ class Namespace : public detail::Registrar
     }
 
 #endif
+    /**
+        Add an indexer function that is triggered when no result is found in
+        functions, properties or any other members. Let the user define an fall
+        back indexer at its level.  
+     */
+    Class <T>& addIndex(luabridge::LuaRef (T::* idxf)(luabridge::LuaRef, lua_State*)) {
+        using MemFnPtr=luabridge::LuaRef (T::*)(luabridge::LuaRef, lua_State*);
+        assertStackState (); // Stack: const table (co), class table (cl), static table (st)
+        new (lua_newuserdata(L, sizeof(MemFnPtr))) MemFnPtr(idxf);
+        lua_pushcclosure(L,&CFunc::CallMember<MemFnPtr>::f, 1);
+        lua_rawsetp(L, -3, detail::getIndexKey ()); 
+        return *this;
+    }
+    /**
+        Add an insert indexer function that is triggered when no result is found in
+        functions, properties or any other members. Let the user define an fall
+        back indexer at its level.  
+     */
+    Class <T>& addNewIndex(luabridge::LuaRef (T::* idxf)(luabridge::LuaRef, luabridge::LuaRef, lua_State*)) { 
+        using MemFnPtr=luabridge::LuaRef (T::*)(luabridge::LuaRef, luabridge::LuaRef, lua_State*);
+        assertStackState (); // Stack: const table (co), class table (cl), static table (st)
+        new (lua_newuserdata(L, sizeof(MemFnPtr))) MemFnPtr(idxf);
+        lua_pushcclosure(L,&CFunc::CallMember<MemFnPtr>::f, 1);
+        lua_rawsetp(L, -3, detail::getNewIndexKey ()); 
+        return *this;
+    }
 
     //--------------------------------------------------------------------------
     /**

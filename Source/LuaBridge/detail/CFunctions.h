@@ -118,7 +118,7 @@ struct CFunc
       if (lua_isnil (L, -1)) // Stack: mt, nil
       {
         lua_pop (L, 1); // Stack: mt
-        rawgetfield (L,-1,"__indexfb"); // Stack: mt, ifb (may be nil)
+        lua_rawgetp (L,-1, getIndexKey()); // Stack: mt, ifb (may be nil)
         lua_remove (L, -2); // Stack: ifb
         if (lua_iscfunction (L,-1)) 
         {
@@ -200,7 +200,7 @@ struct CFunc
       if (lua_isnil (L, -1)) // Stack: mt, nil
       {
         lua_pop (L, 1); // Stack: -
-        rawgetfield(L,-1,"__newindexfb"); // Stack: nifb (may be nil)
+        lua_rawgetp(L,-1, getNewIndexKey()); // Stack: nifb (may be nil)
         if (lua_iscfunction(L,-1)) {
           lua_pushvalue(L,1); // stack: nifb, arg1
           lua_pushvalue(L,2); // stack: nifb, arg2
