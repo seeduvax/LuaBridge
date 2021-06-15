@@ -117,6 +117,7 @@ protected:
     {
       char const* s = lua_tostring (m_L, -1);
       m_what = s ? s : "";
+      lua_pop(m_L,1);
     }
     else
     {
