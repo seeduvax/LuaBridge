@@ -4,7 +4,7 @@ project (LuaBridge)
 
 include (CMakeDependentOption)
 
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 
 option (LUABRIDGE_NO_CXX11 "Use C++11 standard if supported by compiler" OFF)
 

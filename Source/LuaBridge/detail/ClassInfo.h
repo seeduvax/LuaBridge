@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <typeinfo>
+
 namespace luabridge {
 namespace detail {
 
@@ -37,12 +39,7 @@ namespace detail {
  */
 inline const void* getTypeKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x71);
-#endif
 }
 
 /**
@@ -50,12 +47,7 @@ inline const void* getTypeKey ()
  */
 inline const void* getConstKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0xc07);
-#endif
 }
 
 /**
@@ -63,12 +55,7 @@ inline const void* getConstKey ()
  */
 inline const void* getClassKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0xc1a);
-#endif
 }
 
 /**
@@ -76,12 +63,7 @@ inline const void* getClassKey ()
  */
 inline const void* getPropgetKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x6e7);
-#endif
 }
 
 /**
@@ -89,12 +71,7 @@ inline const void* getPropgetKey ()
  */
 inline const void* getPropsetKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x5e7);
-#endif
 }
 
 /**
@@ -102,12 +79,7 @@ inline const void* getPropsetKey ()
  */
 inline const void* getStaticKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x57a);
-#endif
 }
 
 /**
@@ -115,12 +87,7 @@ inline const void* getStaticKey ()
  */
 inline const void* getParentKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0xdad);
-#endif
 }
 
 /**
@@ -128,24 +95,36 @@ inline const void* getParentKey ()
  */
 inline const void* getIndexKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x81ca);
-#endif
 }
 /**
  * The key of the new index fall back in another metatable.
  */
 inline const void* getNewIndexKey ()
 {
-#ifdef _NDEBUG
-  static char value;
-  return &value;
-#else
   return reinterpret_cast <void*> (0x8107);
-#endif
+}
+
+
+// use compile-time hash function. fnv1a has good enough distribution. don't use std::type_info.hash_code() because there 
+// can be inconsistencies across compilers/libs used and we want this to be robust across shared libs boundaries
+// (for example std::type_info<T>.hash_code() yields different results in libc++ and libstdc++
+static constexpr uint32_t fnv1a(const char* s) noexcept
+{
+    uint32_t seed = 2166136261u;
+
+    while (*s != '\0') {
+        seed = static_cast<uint32_t>(static_cast<uint32_t>(seed ^ static_cast<uint8_t>(*s++)) * 16777619u);
+    }
+
+    return seed;
+}
+
+template <class T>
+static constexpr size_t typeHash() noexcept
+{
+    // no real other way to get type name in a constexpr context without doing this. at least on modern clang and g++ this return the same result, so it should be safe
+    return fnv1a(typeid(T).name());
 }
 
 /**
@@ -156,8 +135,8 @@ inline const void* getNewIndexKey ()
 template <class T>
 void const* getStaticRegistryKey ()
 {
-  static char value;
-  return &value;
+    static auto value = typeHash<T>();
+    return reinterpret_cast<void*>(value);
 }
 
 /** Get the key for the class table in the Lua registry.
@@ -168,8 +147,8 @@ void const* getStaticRegistryKey ()
 template<class T>
 void const* getClassRegistryKey ()
 {
-  static char value;
-  return &value;
+    static auto value = typeHash<T>() ^ 1;
+    return reinterpret_cast<void*>(value);
 }
 
 /** Get the key for the const table in the Lua registry.
@@ -179,8 +158,8 @@ void const* getClassRegistryKey ()
 template<class T>
 void const* getConstRegistryKey ()
 {
-  static char value;
-  return &value;
+    static auto value = typeHash<T>() ^ 2;
+    return reinterpret_cast<void*>(value);
 }
 
 } // namespace detail
