@@ -1,5 +1,12 @@
 # LuaBridge seeduvax fork specifics change log
 
+## tag LuaBridge_seeduvax-2.6.2
+
+### seeduvax#4: missing stack pop on exception handling 
+
+use a more or less safe and consistent way to have class keys work across lib
+boundaries. requires c++14. Pull request from flohgh.
+
 ## tag LuaBridge_seeduvax-2.6.1
 
 ### seeduvax#3: missing stack pop on exception handling 
