@@ -105,6 +105,7 @@ inline const void* getNewIndexKey ()
   return reinterpret_cast <void*> (0x8107);
 }
 
+#ifndef CPP_FOR_LIBCLANG
 
 // use compile-time hash function. fnv1a has good enough distribution. don't use std::type_info.hash_code() because there 
 // can be inconsistencies across compilers/libs used and we want this to be robust across shared libs boundaries
@@ -161,6 +162,27 @@ void const* getConstRegistryKey ()
     static auto value = typeHash<T>() ^ 2;
     return reinterpret_cast<void*>(value);
 }
+
+#else
+// this code will never actually run, it's there to ease ASTRE Lua model parsing on all platforms (some are not fully compliant with clang std=c++14)
+template <class T>
+void const* getStaticRegistryKey ()
+{
+    return reinterpret_cast <void*> (0xcaca);
+}
+
+template<class T>
+void const* getClassRegistryKey ()
+{
+    return reinterpret_cast <void*> (0xcaca);
+}
+
+template<class T>
+void const* getConstRegistryKey ()
+{
+    return reinterpret_cast <void*> (0xcaca);
+}
+#endif // CPP_FOR_LIBCLANG
 
 } // namespace detail
 
