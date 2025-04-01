@@ -1,5 +1,13 @@
 # LuaBridge seeduvax fork specifics change log
 
+## tag LuaBridge_seeduvax-2.6.4
+
+attach backtrace to Lua error message in LuaException + check call stack consistency of Lua calling through LuaBridge
+
+## tag LuaBridge_seeduvax-2.6.3
+
+added specific case for Lua models
+
 ## tag LuaBridge_seeduvax-2.6.2
 
 ### seeduvax#4: missing stack pop on exception handling 
