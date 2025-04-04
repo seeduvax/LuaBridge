@@ -1,5 +1,9 @@
 # LuaBridge seeduvax fork specifics change log
 
+## tag LuaBridge_seeduvax-2.6.5
+
+changed stack consistency check in a more explicit thread id check
+
 ## tag LuaBridge_seeduvax-2.6.4
 
 attach backtrace to Lua error message in LuaException + check call stack consistency of Lua calling through LuaBridge
