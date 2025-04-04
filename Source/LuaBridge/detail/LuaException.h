@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
   https://github.com/vinniefalco/LuaBridge
-  
+
   Copyright 2012, Vinnie Falco <vinnie.falco@gmail.com>
   Copyright 2008, Nigel Atkinson <suprapilot+LuaCode@gmail.com>
 
@@ -29,8 +29,10 @@
 
 #pragma once
 
+#include <cstring>
 #include <exception>
 #include <string>
+#include <thread>
 
 namespace luabridge {
   /// saves stack top in Lua registry to set it cleanly back after pcall.
@@ -38,29 +40,35 @@ namespace luabridge {
   class LuaCaller {
   public:
     /// call this before pushing function and args to call
-    static void preCall(lua_State* L) {
-      // assert(registry[L] == nil) -- check preCall/postCall sequence consistency
+    static int preCall(lua_State* L) {
+      // assert(registry[L] == nil or registry[L] == current_thread) -- check call thread safety
       const int top = ::lua_gettop(L);
+      void* tid_userdata = nullptr;
+      auto tid = std::this_thread::get_id();
+      ::memcpy(&tid_userdata, &tid, std::min(sizeof(tid), sizeof(tid_userdata)));
       ::lua_pushlightuserdata(L, L);
       ::lua_gettable(L, LUA_REGISTRYINDEX);
-      assert(lua_isnil(L, -1) == 1);
+      bool isNil = lua_isnil(L, -1) == 1;
+      bool isCurrentThread = false;
+      if (!isNil && lua_islightuserdata(L, -1) == 1) {
+        const void* stored_tid = ::lua_touserdata(L, -1);
+        isCurrentThread = stored_tid == tid_userdata;
+      }
       lua_pop(L, 1);
-       // regitry[L] = stack top -- save stack top to restore
-      ::lua_pushlightuserdata(L, L);
-      ::lua_pushinteger(L, top);
-      ::lua_settable(L, LUA_REGISTRYINDEX);
+      assert((isNil || isCurrentThread) && "Lua call from invalid thread !");
+      if (isNil) {
+        // registry[L] = current thread
+        ::lua_pushlightuserdata(L, L);
+        ::lua_pushlightuserdata(L, tid_userdata);
+        ::lua_settable(L, LUA_REGISTRYINDEX);
+      }
       // push backtrace function to reference it in error case
       ::lua_pushcfunction(L, LuaBacktrace);
+      return top;
     }
 
     /// call this after getting the return values from stack
-    static void postCall(lua_State* L) {
-      // assert(type(registry[L]) == "number") -- check preCall/postCall sequence consistency
-      ::lua_pushlightuserdata(L, L);
-      ::lua_gettable(L, LUA_REGISTRYINDEX);
-      assert(lua_isnumber(L, -1) == 1);
-      // top = registry[L]
-      const int top = ::lua_tointeger(L, -1);
+    static void postCall(lua_State* L, int top) {
       // registry[L] = nil
       ::lua_pushlightuserdata(L, L);
       ::lua_pushnil(L);
@@ -71,42 +79,27 @@ namespace luabridge {
 
   private:
     static int LuaBacktrace(lua_State* L) {
-      // top = registry[L]
-      ::lua_pushlightuserdata(L, L);
-      ::lua_gettable(L, LUA_REGISTRYINDEX);
-      assert(lua_isnumber(L, -1) == 1);
-      const int top = ::lua_tointeger(L, -1);
       // push errmsg + stack trace
-      ::luaL_traceback(L, L, ::lua_tostring(L, -2), top);
+      ::luaL_traceback(L, L, ::lua_tostring(L, -1), 1);
       return 1;
     }
   };
 
 
-class LuaException : public std::exception 
+class LuaException : public std::exception
 {
 private:
   lua_State* m_L;
   std::string m_what;
+  int m_top;
 
 public:
   //----------------------------------------------------------------------------
   /**
       Construct a LuaException after a lua_pcall().
   */
-  LuaException (lua_State* L, int /*code*/)
-    : m_L (L)
-  {
-    whatFromStack ();
-  }
-
-  //----------------------------------------------------------------------------
-
-  LuaException (lua_State *L,
-                char const*,
-                char const*,
-                long)
-    : m_L (L)
+  LuaException (lua_State* L, int top)
+    : m_L (L), m_top(top)
   {
     whatFromStack ();
   }
@@ -142,12 +135,12 @@ public:
   /**
       Wrapper for lua_pcall that throws.
   */
-  static void pcall (lua_State* L, int nargs = 0, int nresults = 0)
+  static void pcall (lua_State* L, int nargs, int nresults, int top)
   {
     int code = lua_pcall (L, nargs, nresults, -(nargs + 2)); // error handler is pushed before function and args
 
     if (code != LUABRIDGE_LUA_OK)
-      Throw (LuaException (L, code));
+      Throw (LuaException (L, top));
   }
 
   //----------------------------------------------------------------------------
@@ -172,7 +165,9 @@ protected:
       // stack is empty
       m_what = "missing error";
     }
-    LuaCaller::postCall(m_L);
+    if (m_top >= 0) {
+      LuaCaller::postCall(m_L, m_top);
+    }
   }
 
 private:
