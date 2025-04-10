@@ -107,18 +107,16 @@ inline const void* getNewIndexKey ()
 
 #ifndef CPP_FOR_LIBCLANG
 
+static constexpr uint32_t nextSeed(uint32_t seed, const char* currentS) {
+    return *currentS != '\0' ? nextSeed(static_cast<uint32_t>(static_cast<uint32_t>(seed ^ static_cast<uint8_t>(*currentS)) * 16777619u), currentS + 1) : seed;
+}
+
 // use compile-time hash function. fnv1a has good enough distribution. don't use std::type_info.hash_code() because there 
 // can be inconsistencies across compilers/libs used and we want this to be robust across shared libs boundaries
 // (for example std::type_info<T>.hash_code() yields different results in libc++ and libstdc++
 static constexpr uint32_t fnv1a(const char* s) noexcept
 {
-    uint32_t seed = 2166136261u;
-
-    while (*s != '\0') {
-        seed = static_cast<uint32_t>(static_cast<uint32_t>(seed ^ static_cast<uint8_t>(*s++)) * 16777619u);
-    }
-
-    return seed;
+    return nextSeed(2166136261u, s);
 }
 
 template <class T>
