@@ -58,11 +58,9 @@ namespace detail {
 class Userdata
 {
 protected:
-  void* m_p; // subclasses must set this
+  void* m_p = 0; // subclasses must set this
 
-  Userdata() : m_p (0)
-  {	  
-  }
+  Userdata() = default;
 	
   //--------------------------------------------------------------------------
   /**
@@ -234,7 +232,7 @@ private:
   }
 
 public:
-  virtual ~Userdata () { }
+  virtual ~Userdata () = default;
 
   //--------------------------------------------------------------------------
   /**
@@ -294,8 +292,8 @@ template <class T>
 class UserdataValue : public Userdata
 {
 private:
-  UserdataValue <T> (UserdataValue <T> const&);
-  UserdataValue <T> operator= (UserdataValue <T> const&);
+  UserdataValue (UserdataValue <T> const&) = delete;
+  UserdataValue<T>& operator= (UserdataValue <T> const&) = delete;
 
   char m_storage [sizeof (T)];
 
@@ -380,8 +378,8 @@ public:
 class UserdataPtr : public Userdata
 {
 private:
-  UserdataPtr (UserdataPtr const&);
-  UserdataPtr operator= (UserdataPtr const&);
+  UserdataPtr (UserdataPtr const&) = delete;
+  UserdataPtr operator= (UserdataPtr const&) = delete;
 
 private:
   /** Push a pointer to object using metatable key.
@@ -450,8 +448,8 @@ template <class C>
 class UserdataShared : public Userdata
 {
 private:
-  UserdataShared (UserdataShared <C> const&);
-  UserdataShared <C>& operator= (UserdataShared <C> const&);
+  UserdataShared (UserdataShared <C> const&) = delete;
+  UserdataShared <C>& operator= (UserdataShared <C> const&) = delete;
 
   typedef typename TypeTraits::removeConst <
     typename ContainerTraits <C>::Type>::Type T;
@@ -459,9 +457,7 @@ private:
   C m_c;
 
 private:
-  ~UserdataShared ()
-  {
-  }
+  ~UserdataShared () = default;
 
 public:
   /**
